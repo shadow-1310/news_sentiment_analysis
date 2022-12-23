@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home Page</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+
+    <style>
+      .navbar-light .navbar-nav .nav-link {
+        color: white;
+        font-size: 22px;
+      }
+      .navbar-light .navbar-brand {
+        color: white;
+        font-size: 30px;
+      }
+      body {
+        background: linear-gradient(
+          90deg,
+          rgba(189, 195, 199, 1) 0%,
+          rgba(44, 62, 80, 0.8743698162858894) 100%
+        );
+      }
+      #myform {
+        position: relative;
+        color: black;
+        top: 200px;
+      }
+      #submit {
+        position: relative;
+        left: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-light bg-light fixed-top bg-transparent"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">News-Sentiment Analyzer</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="#">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">About Me</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Services</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container" id="myform">
+      <form action="make_article_db" id="input" method="post">{% csrf_token %}
+        <div class="form-group row mt-4">
+          <label for="inputEmail3" class="col-sm-2 col-form-label"
+            >Keyword</label
+          >
+          <div class="col-sm-5">
+            <input
+              type="text"
+              class="form-control"
+              id="inputEmail3"
+              name="keyword"
+              placeholder="Narendra Modi"
+            />
+          </div>
+        </div>
+        <div class="form-group row mt-4">
+          <label for="inputPassword3" class="col-sm-2 col-form-label"
+            >API Key</label
+          >
+          <div class="col-sm-5">
+            <input
+              type="text"
+              class="form-control"
+              name="api_key"
+              id="inputPassword3"
+              placeholder="cf7c561137924c488f09d69800f37046"
+            />
+          </div>
+        </div>
+        <fieldset class="form-group mt-4">
+          <div class="row">
+            <legend class="col-form-label col-sm-2 pt-0">News Sources</legend>
+            <div class="col-sm-10">
+              <div class="form-check mt-2">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="source"
+                  id="gridRadios1"
+                  value="NewsAPI"
+                  checked
+                />
+                <label class="form-check-label" for="gridRadios1">
+                  NewsAPI
+                </label>
+              </div>
+              <div class="form-check mt-2">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="gridRadios"
+                  id="gridRadios2"
+                  value="option2"
+                  disabled
+                />
+                <label class="form-check-label" for="gridRadios2">
+                  Google News
+                </label>
+              </div>
+              <div class="form-check disabled mt-2">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="gridRadios"
+                  id="gridRadios3"
+                  value="option3"
+                  disabled
+                />
+                <label class="form-check-label" for="gridRadios3">
+                  Times Of India
+                </label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <div class="form-group row w-25 mt-5 m-lg-6" id="submit">
+          <div class="col mx-auto">
+            <button type="submit" form="input" class="btn btn-primary">
+              Fetch Articles
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- <form action="make_article_db" id="input" method="post">
+      {% csrf_token %} <label for="source1">Select the source</label><br />
+      <input
+        type="radio"
+        id="source1"
+        name="source"
+        value="NewsAPI"
+      />NewsAPI<br />
+      <input type="radio" id="source2" name="source" value="TOI" />Times Of
+      India<br />
+      <label for="keyword">Select the Keyword </label><br />
+      <input
+        type="text"
+        id="keyword"
+        name="keyword"
+        placeholder="Himanta Biswa"
+      /><br />
+      <label for="api_key">Enter your API Key </label><br />
+      <input
+        type="text"
+        id="api_key"
+        name="api_key"
+        placeholder="f7c561137924c488f09d69800f37046"
+      /><br />
+      <input type="submit" form="input" /><br />
+    </form> -->
+  </body>
+</html>
