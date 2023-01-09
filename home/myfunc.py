@@ -1,37 +1,9 @@
-from django.shortcuts import render, HttpResponse
-from datetime import date, timedelta
-from transformers import pipeline
-import nltk
-import re
-import json
-import requests, pandas as pd
-from nltk.sentiment import SentimentIntensityAnalyzer
-from sqlalchemy import create_engine
-from home.models import article_gnews
+import requests
 import random
 from datetime import datetime
+import re
 from bs4 import BeautifulSoup
 from time import sleep
-import warnings
-import spacy
-from collections import Counter
-import plotly.express as px
-import plotly
-
-
-warnings.filterwarnings("ignore")
-
-def extract_summary(text):
-    global keyword
-    result = []
-    sentences = nltk.sent_tokenize(text)
-    for sentence in sentences:
-        if keyword in sentence:
-            result.append(sentence)
-        else:
-            continue
-    return "".join(result)
-
 
 def scrap_ANI(url):
     article = ""
@@ -79,7 +51,6 @@ def scrap_deccan_herald(url):
     for item in p_list:
         article += item.get_text().strip()
     return p_date, p_time, article
-
 
 def scrap_hindu(url):
     article = ""
@@ -195,7 +166,7 @@ def scrap_sentinel_assam(url):
     p_time = datetime.strptime(publish_time, time_format).time()
     
     content_box = soup.find('div', attrs={"class":"content details-content-story"})
-    p_list = content_box.findAll('p')[:-3] # list slicing is to remomve "also read" "also watch" paragraphs
+    p_list = content_box.findAll('p')[:-7] # list slicing is to remomve "also read" "also watch" paragraphs
     for item in p_list:
         article += item.get_text().strip()
     return p_date, p_time, article
@@ -223,18 +194,16 @@ def scrap_timesnow(url):
         article += item.get_text().strip()
     return p_date, p_time, article
 
-global compare_date
-compare_date = date.today()
 
 def fetch_gnews(url):
-    root = "https://www.google.com/"
-    global method
     global compare_date
-    global keyword
+    global updated_date
+    global problems
+    global output
+    root = "https://www.google.com/"
     scrappable = ['ANI News', 'Deccan Herald', 'The Hindu', 'Northeast Now', 'Outlook India', 'Republic World', 'The Sentinel Assam', 'Times Now']
     headers={'User-Agent': 'Mozilla/5.0'}
-    # n= random.randint(1,2)
-    n = random.uniform(0,0.5)
+    n= random.randint(1,2)
     sleep(n)
     webpage = requests.get(url, headers).text
     soup = BeautifulSoup(webpage, 'lxml')
@@ -326,22 +295,27 @@ def fetch_gnews(url):
                 except:
                     problem_source = source
                     problem_link = link
-            
-            every_page = {'keyword': keyword,
-                      'method' : method,
-                      'headline': title,
+            else:
+                continue
+               
+        else:
+            title = None
+            link = None
+            p_date = None
+            p_time = None
+            desc = None
+
+        every_page = {'headline': title,
                       'publish_date': p_date,
                          'publish_time': p_time,
                       'source': source,
                          'article':desc,
                          'url': link}
-            output.append(every_page)
-            
-            recheck = {'problem_source': problem_source,
+        output.append(every_page)
+        
+        recheck = {'problem_source': problem_source,
                   'problem_link': problem_link}
-            
-            problems.append(recheck)                       
-                
+        problems.append(recheck)
     if compare_date < updated_date:
         flag = False
 
@@ -349,163 +323,3 @@ def fetch_gnews(url):
         fetch_gnews(next_page_link)
     else:
         print("End Of result")
-
-
-def test(request):
-    # df = pd.read_csv("hb.csv")
-    # engine = create_engine("sqlite:///db.sqlite3")
-    # df.to_sql(article_gnews._meta.db_table,
-    #           if_exists="replace", con=engine, index=False)
-
-    # Build the raw SQL query
-    keyword = "Himanta Biswa"
-    query = "SELECT id, MAX(publish_date) AS p_date FROM home_article_gnews GROUP BY keyword HAVING keyword = %s"
-    params = ['{}'.format(keyword)]
-
-    # Execute the raw SQL query using the `Raw` queryset method
-    max_date = article_gnews.objects.raw(query, params)
-    print("Hello this is the latest date for mama", max_date[0].p_date)
-    # article_gnews.objects.all().delete()
-    return HttpResponse("success bro")
-
-
-def parse_datetime(text):
-    try:
-        date = text.split("T")[0]
-        time = text.split("T")[1][:-1]
-    except:
-        date = 'Not Available'
-        time = 'Not Available'
-    return pd.Series([date, time])
-
-
-def remove_html_tags(text):
-    pattern = re.compile("<.*?>|\r\n|\r")
-    return pattern.sub("", text).replace("\xa0", "")
-
-
-def use_vader(text):
-    sia = SentimentIntensityAnalyzer()
-    score = sia.polarity_scores(text)
-    score_comp = score['compound']
-    if score_comp > 0:
-        verdict = 'POSITIVE'
-    elif score_comp < 0:
-        verdict = 'NEGATIVE'
-    else:
-        verdict = 'NEUTRAL'
-        
-    return pd.Series([verdict, score_comp])
-
-
-def fetch_article(keyword, method, api_key):
-    from_date = date.today()-timedelta(days=30)
-    if method == 'NewsAPI':
-        base = 'https://newsapi.org/v2/'
-        url = base + 'everything?q={}&searchIn=title,description&from={}&sortBy=publishedAt&apiKey={}'.format(keyword,from_date,api_key)
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout = 30)
-        df = pd.DataFrame(response.json()['articles'])
-        df[['date', 'time']] = df['publishedAt'].apply(parse_datetime)
-        df['source'] = df['source'].apply(lambda x: x['name'])
-        df.rename(columns={'title': 'headline', 'description':'summary', 'content':'article', 'date':'publish_date','time':'publish_time'}, inplace=True)
-        df.drop(columns = ['publishedAt', 'urlToImage', 'author'], inplace = True)
-        df[['sentiment', 'confidence']] = df['summary'].apply(use_vader)
-        df['keyword'] = keyword
-        df['method'] = method
-        df = df.reset_index(drop=True)
-        df.index.name = 'id'
-
-    elif method == 'gnews':
-        global compare_date
-        compare_date = date.today()
-        global updated_date # write raw SQL query to fetch the latest date from database
-        try:
-            query = "SELECT id, MAX(publish_date) AS p_date FROM home_article_gnews GROUP BY keyword HAVING keyword = %s"
-            params = ['{}'.format(keyword)]
-            max_date = article_gnews.objects.raw(query, params)
-            updated_date = max_date[0].p_date
-        except:
-            updated_date = date.today() - timedelta(days=60)
-        first = "https://www.google.com/search?q={}&tbm=nws&source=lnt&tbs=sbd:1&sa=X&ved=0ahUKEwjAvsKDyOXtAhXBhOAKHXWdDgcQpwUIKQ&biw=1604&bih=760&dpr=1.2".format(keyword)
-        global output
-        global problems
-        output = []
-        problems = []
-        fetch_gnews(first)
-        df = pd.DataFrame(output)
-        df.dropna(subset=['article'],inplace=True)
-        df = df[df['article'] != '']
-        df['summary'] = df['article'].apply(extract_summary)
-        df[['sentiment', 'confidence']] = df['summary'].apply(use_vader)
-        df = df.reset_index(drop=True)
-        df.index.name = 'id'
-    return df
-
-def unix_to_user(timestamp):
-    date_time = datetime.fromtimestamp(int(timestamp)/1000)
-    return date_time.strftime("%d-%m-%Y")
-
-def make_article_db(request):
-    global method
-    global keyword
-    global results
-    API_KEY = request.POST.get('api_key', 'default')
-    keyword = request.POST.get('keyword', 'default').title()
-    method = request.POST.get('method', 'default')
-    
-    result = fetch_article(keyword, method, API_KEY)
-    engine = create_engine("sqlite:///db.sqlite3")
-    result.to_sql(article_gnews._meta.db_table,
-              if_exists="replace", con=engine, index=False)
-    # return HttpResponse("writing finished to database")
-    fetch_query = '''SELECT publish_date, publish_time, source, headline, summary, sentiment, article, confidence, method, keyword FROM home_article_gnews WHERE keyword = "{}" AND method="{}"'''.format(keyword.replace('"', '""'), method.replace('"', '""'))
-    # params = ['{}'.format(keyword)]
-    results = pd.read_sql(fetch_query, engine)
-    # results['publish_date'] = results['publish_date'].apply(unix_to_user)
-    # result.to_csv("{}.csv".format(keyword.replace(' ', '')))
-    json_records = results.reset_index().to_json(orient ='records', date_format='iso')
-    arr = []
-    arr = json.loads(json_records)
-    contextt = {'d': arr}
-    return  render(request,'show-sentiment.html',contextt)
-    # return HttpResponse(result.to_html())
-
-def index(request):
-    return render(request, 'index.html')
-
-def ner_counter(text):
-    nlp = spacy.load("en_core_web_lg")
-    text1 = nlp(text)
-    persons = [x.text for x in text1.ents if x.label_ == "PERSON"]
-    locations = [x.text for x in text1.ents if x.label_ == "GPE"]
-    count_person = Counter(persons)
-    count_gpe= Counter(locations)
-
-    df_person = pd.DataFrame.from_dict(count_person, orient='index').reset_index()
-    df_person.rename(columns={'index': 'person', 0: 'count'}, inplace=True)
-    df_person = df_person.sort_values(by=['count'], ascending =False).reset_index(drop=True).head(10)
-
-    df_gpe = pd.DataFrame.from_dict(count_gpe, orient='index').reset_index()
-    df_gpe.rename(columns={'index': 'location', 0: 'count'}, inplace=True)
-    df_gpe = df_gpe.sort_values(by=['count'], ascending =False).reset_index(drop=True).head(10)
-
-    return df_person, df_gpe
-
-
-def analyze(request):
-    corpus = " ".join(results['article'])
-    person, location = ner_counter(corpus)
-
-    fig_person = px.bar(person, x='count', y='person', orientation='h', title="Count for mention of Persons", template="plotly_white",color_discrete_sequence=px.colors.qualitative.Dark2,)
-    graph_person = plotly.offline.plot(fig_person, auto_open = False, output_type="div")
-    
-    fig_location = px.bar(location, x='count', y='location', orientation='h', title="Count for mention of locations", template="plotly_white",color_discrete_sequence=px.colors.qualitative.Dark2,)
-    graph_location = plotly.offline.plot(fig_location, auto_open = False, output_type="div")
-
-    params = {
-        'graph_person': graph_person,
-        'graph_location': graph_location,
-    }
-    return render(request, 'analysis.html', params)
-

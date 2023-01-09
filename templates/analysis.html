@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analysis Page</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+
+    <style>
+      .navbar-light .navbar-nav .nav-link {
+        color: white;
+        font-size: 22px;
+      }
+      .navbar-light .navbar-brand {
+        color: white;
+        font-size: 30px;
+      }
+      body {
+        background: linear-gradient(
+          90deg,
+          rgba(189, 195, 199, 1) 0%,
+          rgba(44, 62, 80, 0.8743698162858894) 100%
+        );
+      }
+      #analysis {
+        position: relative;
+        color: black;
+        top: 200px;
+        left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-light bg-light fixed-top bg-transparent"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">News-Sentiment Analyzer</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="index">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">About Me</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Services</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container" id="analysis">
+        <div>
+            {{ graph_person|safe }}
+            </div>
+            <div style="top: 15px;position: relative;">
+                {{ graph_location|safe }}
+                </div>
+    </div> 
+</body>
+</html>
